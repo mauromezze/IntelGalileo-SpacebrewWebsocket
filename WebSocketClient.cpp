@@ -68,41 +68,11 @@
  * IF IBM IS APPRISED OF THE POSSIBILITY OF SUCH DAMAGES.
  */
 
-/*
- * This version of WebsocketClient has been adapted by Luca Mari, 2014,
- * to Intel Galileo (Arduino compatible board) and specifically for its usage with Spacebrew.
- * The received situation was of two incompatible versions of the Arduino WebsocketClient library:
- * -- https://github.com/krohling/ArduinoWebsocketClient (implementing the online websocket protocol)
- * -- https://github.com/labatrockwell/ArduinoWebsocketClient (oriented to Spacebrew)
- * neither of them supporting Galileo, an Intel SoC Pentium-based board.
- * They have been revised, modified, and integrated, so that this version runs on Galileo and
- * works for both the connection to a server such as echo.websocket.org (FOR_SPACEBREW not defined)
- * and Spacebrew (FOR_SPACEBREW defined).
- * This version includes extended tracing facilities for debugging (see WebSocketClient.h).
- * The main changes with respect to the previous versions are marked by slash-slash-star-slash-slash.
- */
-
 #include <WebSocketClient.h>
 #include <stdlib.h>
 #include <stdarg.h>
 
-#define FOR_SPACEBREW //*// comment to switch from Spacebrew support to the online websocket protocol
-
-#ifndef FOR_SPACEBREW
 //*// prog_char --> char
-char clientHandshakeLine1a[] PROGMEM = "GET ";
-char clientHandshakeLine1b[] PROGMEM = " HTTP/1.1";
-char clientHandshakeLine2[] PROGMEM = "Upgrade: WebSocket";
-char clientHandshakeLine3[] PROGMEM = "Connection: Upgrade";
-char clientHandshakeLine4[] PROGMEM = "Host: ";
-char clientHandshakeLine5[] PROGMEM = "Origin: ArduinoWebSocketClient";
-char clientHandshakeLine6[] PROGMEM = "";
-char clientHandshakeLine7[] PROGMEM = "";
-char clientHandshakeLine8[] PROGMEM = "";
-char serverHandshake[] PROGMEM = "HTTP/1.1 101";
-bool basicHeader = true;
-#endif
-#ifdef FOR_SPACEBREW
 char clientHandshakeLine1a[] PROGMEM = "GET ";
 char clientHandshakeLine1b[] PROGMEM = " HTTP/1.1";
 char clientHandshakeLine2[] PROGMEM = "Upgrade: WebSocket";
@@ -113,8 +83,6 @@ char clientHandshakeLine6[] PROGMEM = "Sec-WebSocket-Version: 13";
 char clientHandshakeLine7[] PROGMEM = "Sec-WebSocket-Key: ";
 char clientHandshakeLine8[] PROGMEM = "Sec-WebSocket-Protocol: ";
 char serverHandshake[] PROGMEM = "HTTP/1.1 101";
-bool basicHeader = false;
-#endif
 
 PROGMEM const char *WebSocketClientStringTable[] =
 {
@@ -209,23 +177,6 @@ void WebSocketClient::monitor() {
     return;
   }
 
-#ifndef FOR_SPACEBREW
-  char character; //*// adapted
-  if(_client.available() > 0 && (character = _client.read()) == 0) {
-    char* data = (char*)malloc(1024);
-    bool endReached = false;
-    int i = 0;
-    while(!endReached) {
-      character = _client.read();
-      endReached = character == -1;
-      if(!endReached) { data[i] = character; i++; }
-    }
-    data[i] = 0x0;
-    if(_onMessage != NULL) { _onMessage(*this, data); }
-  }
-#endif
-
-#ifdef FOR_SPACEBREW
   if(_client.available() > 0) { //*// it was > 2: NOTE: still to check / enhance
     byte hdr = nextByte();
     bool fin = hdr & 0x80;
@@ -366,7 +317,6 @@ void WebSocketClient::monitor() {
     free(_packet);
     _packet = NULL;
   }
-#endif
 }
 
 void WebSocketClient::onMessage(OnMessage fn) { _onMessage = fn; }
@@ -413,24 +363,24 @@ void WebSocketClient::sendHandshake(char* hostname, char* path, char* protocol) 
   Serial.print("Handshake 5: "); Serial.println(buffer);
 #endif
 
-  if(!basicHeader) { getStringTableItem(buffer, 6); _client.println(buffer); }
+  getStringTableItem(buffer, 6); _client.println(buffer);
 #ifdef HANDSHAKE
-  if(!basicHeader) { Serial.print("Handshake 6: "); Serial.println(buffer); }
+  Serial.print("Handshake 6: "); Serial.println(buffer);
 #endif
 
-  if(!basicHeader) { getStringTableItem(buffer, 7); _client.print(buffer); }
+  getStringTableItem(buffer, 7); _client.print(buffer);
 #ifdef HANDSHAKE
-  if(!basicHeader) { Serial.print("Handshake 7: "); Serial.print(buffer); }
+  Serial.print("Handshake 7: "); Serial.print(buffer);
 #endif
 
-  if(!basicHeader) { generateHash(buffer, 45); _client.println(buffer); }
+  generateHash(buffer, 45); _client.println(buffer);
 #ifdef HANDSHAKE
-  if(!basicHeader) { Serial.println(buffer); }
+  Serial.println(buffer);
 #endif
 
-  if(!basicHeader) { getStringTableItem(buffer, 8); _client.print(buffer); _client.println(protocol); }
+  getStringTableItem(buffer, 8); _client.print(buffer); _client.println(protocol);
 #ifdef HANDSHAKE
-  if(!basicHeader) { Serial.print("Handshake 8: "); Serial.print(buffer); Serial.println(protocol); }
+  Serial.print("Handshake 8: "); Serial.print(buffer); Serial.println(protocol);
 #endif
 
   _client.println();
@@ -495,7 +445,6 @@ bool WebSocketClient::send(char* message) {
   Serial.print("WebSocketClient::send() - message="); Serial.println(message);
 #endif
 
-#ifdef FOR_SPACEBREW
   int len = strlen(message);
   _client.write(0x81);
   if(len > 125) {
@@ -509,14 +458,6 @@ bool WebSocketClient::send(char* message) {
     _client.write((byte)0x00); // use 0x00 for mask bytes which is effectively a NOOP
   }
   _client.print(message);
-#endif
-
-#ifndef FOR_SPACEBREW
-  _client.print((char)0);
-  _client.print(message);
-  _client.print((char)255);
-#endif
-  
   return true;
 }
 
