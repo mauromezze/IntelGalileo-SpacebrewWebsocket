@@ -26,8 +26,10 @@ UPDATE: [RFC 6544](http://tools.ietf.org/html/rfc6455) support is improving.  Se
 Once you've cloned this repo locally, copy the ArduinoWebsocketClient directory into your Arduino Sketchbook directory under Libraries then restart the Arduino IDE so that it notices the new library.  Now, under File\Examples you should see ArduinoWebsocketClient.  To use the library in your app, select Sketch\Import Library\ArduinoWebsocketClient.
 
 ## How To Use This Library: some examples
-First example: a sketch that connects to the server echo.websocket.org, send a text, and receives the reply.
+###First example 
+A sketch that connects to the server echo.websocket.org, send a text, and receives the reply.
 
+```
 #include "Arduino.h"
 #include <Ethernet.h>
 #include <SPI.h>
@@ -65,11 +67,15 @@ void onError(WebSocketClient client, char* message) {
   Serial.println("EXAMPLE: onError()");
   Serial.print("ERROR: "); Serial.println(message);
 }
+```
 
 **************************************************
-Second example: a Spacebrew client, tested on Intel Galileo, operating as subscriber that does not require any additional hardware.
+###Second example
+A Spacebrew client, tested on Intel Galileo, operating as subscriber that does not require any additional hardware.
 It just turns the internal led on and off.
 
+
+```
 #include <SPI.h>
 #include <Spacebrew.h>
 #include <Ethernet.h>
@@ -114,11 +120,14 @@ void onBooleanMessage(char *name, bool value) {
   Serial.print("EXAMPLE: onBooleanMessage(): ");
   Serial.println(ledValue);
 }
+```
 
 **************************************************
-Third example: a Spacebrew client, tested on Intel Galileo, operating as publisher that does not require any additional hardware.
+###Third example
+A Spacebrew client, tested on Intel Galileo, operating as publisher that does not require any additional hardware.
 It just sends an alternate on/off signal.
 
+```
 #include <SPI.h>
 #include <Spacebrew.h>
 #include <Ethernet.h>
@@ -147,3 +156,4 @@ void loop() {
   Serial.println(x);
   delay(1000);
 }
+```
